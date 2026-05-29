@@ -11,6 +11,7 @@
 <script src="https://unpkg.com/mobile-drag-drop/index.min.js"></script>
 <script src="https://unpkg.com/mobile-drag-drop/scroll-behaviour-hack.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
 <style>
   /* ─── RESET & VARS ─────────────────────────────────────── */
@@ -48,13 +49,23 @@
   header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 64px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10; }
   .logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 3px; color: var(--gold); text-shadow: 0 0 20px rgba(240,192,64,0.4); }
   .logo span { color: var(--teal); }
-  .header-actions { display: flex; gap: 10px; }
-  .btn { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 7px 18px; border-radius: 6px; border: none; cursor: pointer; transition: all .18s; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; transition: all .18s; }
   .btn-gold { background: var(--gold); color: #0b0e13; } .btn-gold:hover { background: var(--gold2); transform: translateY(-1px); }
   .btn-teal { background: var(--teal); color: #0b0e13; } .btn-teal:hover { background: #00ebd0; transform: translateY(-1px); box-shadow: 0 0 12px rgba(0,212,170,0.4); }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); } .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
   .btn-danger { background: transparent; border: 1px solid rgba(255,77,77,0.3); color: var(--red); font-size: 12px; padding: 4px 10px; } .btn-danger:hover { background: rgba(255,77,77,0.15); }
   .btn-edit { background: transparent; border: 1px solid var(--gold); color: var(--gold); } .btn-edit:hover { background: rgba(240,192,64,0.1); } .btn-edit.active { background: var(--gold); color: #0b0e13; box-shadow: 0 0 10px rgba(240,192,64,0.4); }
+  
+  /* Gacha Button Style */
+  .btn-gacha {
+    background: linear-gradient(45deg, #ff00cc, #3333ff, #00ebd0);
+    background-size: 200% 200%;
+    color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    animation: gradientMove 3s ease infinite;
+    box-shadow: 0 0 10px rgba(255, 0, 204, 0.4);
+  }
+  @keyframes gradientMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
   /* ─── LAYOUT ────────────────────────────────────────────── */
   .app { flex: 1; display: grid; grid-template-columns: 320px 1fr 290px; overflow: hidden; }
@@ -65,7 +76,6 @@
   .panel-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--gold); }
   .panel-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--font-ui); text-transform: uppercase; letter-spacing: 1px; }
   
-  /* Filter Area */
   .bench-filters { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0; background: rgba(0,0,0,0.2); }
   .filter-input { flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 13px; padding: 6px 10px; }
   .filter-select { width: 90px; background: var(--panel2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-ui); font-size: 13px; padding: 6px; }
@@ -74,36 +84,45 @@
   .bench-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
   .bench-list::-webkit-scrollbar { width: 4px; } .bench-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .bench-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 16px; font-family: var(--font-ui); line-height: 1.7; }
-  .bench-empty .icon { font-size: 32px; margin-bottom: 8px; display: block; }
 
-  /* ─── PLAYER CARD (bench) ───────────────────────────────── */
-  .player-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; cursor: grab; transition: all .18s; user-select: none; position: relative; overflow: hidden; touch-action: pan-y; }
-  .player-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); border-radius: 3px 0 0 3px; }
-  .player-card:active { cursor: grabbing; } .player-card:hover { background: var(--card-hover); border-color: rgba(240,192,64,0.4); transform: translateX(3px); }
+  /* ─── PLAYER CARD (HOLOGRAM EFFECT) ─────────────────────── */
+  .player-card { 
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; 
+    cursor: grab; transition: all .2s; user-select: none; position: relative; overflow: hidden; touch-action: pan-y; 
+  }
+  .player-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); border-radius: 3px 0 0 3px; z-index: 2;}
+  
+  /* Hologram Shine */
+  .player-card::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg); transition: all 0.5s; z-index: 10; pointer-events: none;
+  }
+  .player-card:hover::after { left: 200%; transition: all 0.6s ease-in-out; }
+  .player-card:active { cursor: grabbing; } 
+  .player-card:hover { background: var(--card-hover); border-color: rgba(240,192,64,0.4); transform: translateX(3px) scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.3);}
+  
   .player-card.dragging { opacity: 0.4; transform: scale(0.97); } .player-card.on-pitch::before { background: var(--teal); }
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; position: relative; z-index: 5;}
   .card-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 1px solid var(--gold); background: #000; }
   .card-info { flex: 1; min-width: 0; display: flex; align-items: center; }
   .card-text-wrap { flex: 1; min-width: 0; }
   .card-name { font-family: var(--font-ui); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-pos { font-size: 11px; color: var(--muted); font-family: var(--font-ui); text-transform: uppercase; }
   .card-ovr { font-family: var(--font-display); font-size: 26px; color: var(--gold); line-height: 1; margin-left: 8px; }
-  .card-stats-mini { display: flex; flex-wrap: wrap; gap: 3px; }
+  .card-stats-mini { display: flex; flex-wrap: wrap; gap: 3px; position: relative; z-index: 5;}
   .stat-chip { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 4px; padding: 2px 5px; flex: 1 1 28%; }
   .stat-chip-label { font-size: 9px; color: var(--muted); font-family: var(--font-ui); text-transform: uppercase; }
   .stat-chip-val { font-size: 11px; font-weight: 700; font-family: var(--font-ui); }
-  .card-actions { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+  .card-actions { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; position: relative; z-index: 5;}
 
   /* ─── PITCH AREA ────────────────────────────────────────── */
   .pitch-area { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; overflow: hidden; gap: 12px; }
   .pitch-controls { display: flex; gap: 8px; align-items: center; width: 100%; max-width: 520px; justify-content: space-between; }
   .pitch-controls-left, .pitch-controls-right { display: flex; gap: 8px; align-items: center; }
-  
   .formation-label { font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; color: var(--teal); }
   .formation-select { font-family: var(--font-ui); font-size: 13px; font-weight: 700; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 6px; cursor: pointer; letter-spacing: 1px; }
-  .formation-select:focus { outline: none; border-color: var(--teal); }
-
-  /* Team Rating Badge */
+  
   .team-rating-badge { display: flex; align-items: center; gap: 6px; background: rgba(240,192,64,0.1); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 14px; }
   .team-rating-label { font-family: var(--font-ui); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
   .team-rating-val { font-family: var(--font-display); font-size: 18px; color: var(--gold); letter-spacing: 1px; }
@@ -114,25 +133,19 @@
   .pitch::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0px, transparent 7.5%, rgba(0,0,0,0.07) 7.5%, rgba(0,0,0,0.07) 15%); }
   .pitch-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  /* ─── POSITION SLOTS ────────────────────────────────────── */
   .slot { position: absolute; width: 68px; height: 68px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 5; user-select: none; }
   .slot-inner { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.35); background-color: var(--slot-empty); background-size: cover; background-position: center top; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all .2s; position: relative; backdrop-filter: blur(2px); overflow: hidden; touch-action: pan-y; }
   .slot-label { font-family: var(--font-ui); font-size: 10px; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.5); }
   .slot.drag-over .slot-inner { border-color: var(--teal); background-color: var(--slot-over); transform: scale(1.12); box-shadow: 0 0 20px rgba(0,212,170,0.5); }
   .slot.occupied .slot-inner { border: 2px solid rgba(240,192,64,0.6); background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
   .slot.occupied:hover .slot-inner { border-color: var(--gold); transform: scale(1.05); }
-  
   .slot-player-name { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-align: center; color: #fff; margin-top: 1px; max-width: 68px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
   .slot-player-ovr { font-family: var(--font-display); font-size: 20px; color: var(--gold); line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8); z-index: 2; }
   .slot-player-pos { font-family: var(--font-ui); font-size: 8px; color: #fff; text-transform: uppercase; background: rgba(0,212,170,0.8); padding: 1px 4px; border-radius: 4px; margin-top: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.8); z-index: 2; }
   .slot.occupied .slot-inner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); z-index: 1; }
 
-  /* ─── EDIT MODE CLASSES ───────────────────────── */
   .pitch-area.is-editing .slot { cursor: grab !important; z-index: 10; }
-  .pitch-area.is-editing .slot:active { cursor: grabbing !important; }
-  .pitch-area.is-editing .slot:hover { z-index: 15; }
-  .pitch-area.is-editing .slot * { pointer-events: none !important; user-select: none !important; }
-  .pitch-area.is-editing .slot-inner { border: 2px dashed var(--gold) !important; background-color: rgba(240,192,64,0.1) !important; box-shadow: 0 0 12px rgba(240,192,64,0.3); animation: pulseEdit 2s infinite; }
+  .pitch-area.is-editing .slot-inner { border: 2px dashed var(--gold) !important; background-color: rgba(240,192,64,0.1) !important; animation: pulseEdit 2s infinite; }
   @keyframes pulseEdit { 0%, 100% { box-shadow: 0 0 5px rgba(240,192,64,0.2); } 50% { box-shadow: 0 0 15px rgba(240,192,64,0.5); } }
 
   /* ─── RIGHT PANEL — CREATOR ─────────────────────────────── */
@@ -141,7 +154,6 @@
   .form-group { margin-bottom: 12px; }
   .form-label { display: block; font-family: var(--font-ui); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
   .form-input, .form-select { width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-family: var(--font-ui); font-size: 15px; padding: 9px 12px; transition: border-color .18s; }
-  .form-input[type="file"] { padding: 6px 10px; font-size: 13px; color: var(--gold); }
   .form-input:focus, .form-select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,212,170,0.08); }
   .img-preview-box { width: 60px; height: 60px; border-radius: 50%; border: 2px dashed var(--border); margin-top: 8px; background-size: cover; background-position: center; display: none; }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -152,19 +164,20 @@
   input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 6px rgba(240,192,64,0.5); }
   .ovr-preview { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; margin-bottom: 14px; }
   .ovr-big { font-family: var(--font-display); font-size: 56px; color: var(--gold); line-height: 1; text-shadow: 0 0 30px rgba(240,192,64,0.4); }
-  .ovr-label { font-family: var(--font-ui); font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
   .btn-create { width: 100%; padding: 12px; border-radius: 8px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #0b0e13; font-family: var(--font-display); font-size: 20px; letter-spacing: 3px; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(240,192,64,0.25); }
 
   /* ─── MODAL & TOAST ─────────────────────────────────────────────── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
   .modal-overlay.active { opacity: 1; pointer-events: all; }
-  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 340px; max-width: 90vw; transform: translateY(20px); transition: transform .2s; box-shadow: 0 24px 60px rgba(0,0,0,0.6); }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 340px; max-width: 90vw; transform: translateY(20px); transition: transform .2s; box-shadow: 0 24px 60px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;}
   .modal-overlay.active .modal { transform: translateY(0); }
   .modal h2 { font-family: var(--font-display); font-size: 22px; color: var(--gold); margin-bottom: 6px; }
-  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
-  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 15px;}
 
-  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--teal); color: #0b0e13; font-family: var(--font-ui); font-size: 14px; font-weight: 700; padding: 10px 22px; border-radius: 30px; z-index: 200; transition: transform .3s; pointer-events: none; white-space: nowrap; }
+  /* Radar Chart Container */
+  .radar-chart-container { width: 100%; max-width: 260px; margin: 0 auto 15px; }
+
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--teal); color: #0b0e13; font-family: var(--font-ui); font-size: 14px; font-weight: 700; padding: 10px 22px; border-radius: 30px; z-index: 200; transition: transform .3s; pointer-events: none; white-space: nowrap; box-shadow: 0 5px 20px rgba(0,0,0,0.5);}
   #toast.show { transform: translateX(-50%) translateY(0); } #toast.error { background: var(--red); color: #fff; }
 
   .stat-high { color: #4ade80; } .stat-mid { color: var(--gold); } .stat-low { color: var(--red); }
@@ -177,18 +190,23 @@
   .bench-dropzone.drag-over-bench { border-color: var(--teal); background: rgba(0,212,170,0.06); color: var(--teal); }
   .section-divider { font-family: var(--font-ui); font-size: 10px; text-transform: uppercase; color: var(--muted); padding: 8px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 
-  /* ─── RESPONSIVE (MOBILE + LANDSCAPE) ───────────────────── */
+  /* Gacha Modal Animation */
+  .pack-opening { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both infinite; }
+  @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+  .gacha-reveal { animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+  /* ─── RESPONSIVE ───────────────────── */
   @media (max-width: 1024px), (max-height: 600px) {
     body { overflow-y: auto; overflow-x: hidden; }
-    header { padding: 0 16px; }
-    .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+    header { padding: 0 16px; flex-wrap: wrap; height: auto; padding-top: 10px; padding-bottom: 10px; gap: 10px;}
+    .header-actions { flex-wrap: wrap; justify-content: flex-start; width: 100%;}
     .app { display: flex; flex-direction: column; overflow: visible; }
     .pitch-area { order: 1; padding: 24px 12px; }
     .bench { order: 2; border-right: none; border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); height: 450px; flex-shrink: 0; }
     .creator-panel { order: 3; border-left: none; height: auto; overflow-y: visible; }
     .pitch-controls { flex-direction: column; gap: 12px; }
     .slot { transform: translate(-50%, -50%) scale(0.9); }
-    .slot.drag-over .slot-inner { transform: scale(1.05); }
   }
   @media (max-width: 400px) {
     .slot { transform: translate(-50%, -50%) scale(0.78); }
@@ -201,19 +219,17 @@
 <header>
   <div class="logo">SQUAD<span>FORGE</span></div>
   <div class="header-actions">
-    <button class="btn btn-teal" onclick="exportPitch()">📸 Share Squad</button>
+    <button class="btn btn-gacha" onclick="openGachaPack()">🎁 Gacha</button>
+    <button class="btn btn-teal" onclick="exportPitch()">📸 Share</button>
     <button class="btn btn-ghost" onclick="clearPitch()">Clear</button>
-    <button class="btn btn-gold" onclick="showCreateModal()">+ Player</button>
   </div>
 </header>
 
 <div class="app">
-
   <div class="bench">
     <div class="panel-header">
       <div class="panel-title">SQUAD BENCH</div>
       <div class="panel-sub" id="bench-count">0 players available</div>
-      <div style="font-size: 10px; color: var(--teal); margin-top: 4px; font-family: var(--font-ui);">💡 แตะค้าง (Hold) เพื่อลากนักเตะลงสนาม</div>
     </div>
     
     <div class="bench-filters">
@@ -227,9 +243,7 @@
       </select>
     </div>
 
-    <div class="bench-list" id="bench-list">
-      <div class="bench-empty"><span class="icon">🏟️</span>No players yet.</div>
-    </div>
+    <div class="bench-list" id="bench-list"></div>
     <div class="bench-dropzone" id="bench-dropzone">↩ Drop to bench</div>
   </div>
 
@@ -246,7 +260,6 @@
           <option value="4231">4-2-3-1</option>
           <option value="352">3-5-2</option>
           <option value="532">5-3-2</option>
-          <option value="4141">4-1-4-1</option>
         </select>
       </div>
       
@@ -256,7 +269,7 @@
       </div>
 
       <div class="pitch-controls-right">
-        <button class="btn btn-ghost" onclick="resetFormation()" title="Reset to default positions">↺</button>
+        <button class="btn btn-ghost" onclick="resetFormation()">↺</button>
         <button class="btn btn-edit" id="btn-edit-mode" onclick="toggleEditMode()">EDIT POSITIONS</button>
       </div>
     </div>
@@ -286,11 +299,6 @@
     </div>
     <div class="creator-body">
       <div class="form-group">
-        <label class="form-label">Player Image (Optional)</label>
-        <input class="form-input" id="inp-img" type="file" accept="image/*">
-        <div class="img-preview-box" id="img-preview"></div>
-      </div>
-      <div class="form-group">
         <label class="form-label">Player Name</label>
         <input class="form-input" id="inp-name" type="text" placeholder="e.g. Marco Rossi" maxlength="28">
       </div>
@@ -298,18 +306,14 @@
         <label class="form-label">Position</label>
         <select class="form-select" id="inp-pos">
           <option value="GK">GK — Goalkeeper</option>
-          <option value="CB">CB — Centre Back</option>
+          <option value="CB" selected>CB — Centre Back</option>
           <option value="LB">LB — Left Back</option>
           <option value="RB">RB — Right Back</option>
-          <option value="CDM">CDM — Def. Midfielder</option>
           <option value="CM">CM — Central Midfielder</option>
           <option value="CAM">CAM — Att. Midfielder</option>
-          <option value="LM">LM — Left Midfielder</option>
-          <option value="RM">RM — Right Midfielder</option>
           <option value="LW">LW — Left Winger</option>
           <option value="RW">RW — Right Winger</option>
           <option value="ST">ST — Striker</option>
-          <option value="CF">CF — Centre Forward</option>
         </select>
       </div>
       <div class="section-divider">Attributes</div>
@@ -330,7 +334,7 @@
     <h2>REMOVE PLAYER</h2>
     <p id="delete-modal-msg">Are you sure you want to delete this player?</p>
     <div class="modal-actions">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('delete-modal')">Cancel</button>
       <button class="btn" style="flex:1;background:var(--red);color:#fff" onclick="confirmDelete()">Delete</button>
     </div>
   </div>
@@ -338,13 +342,26 @@
 
 <div class="modal-overlay" id="player-detail-modal">
   <div class="modal" style="text-align: center;">
-    <div id="detail-img" class="card-avatar" style="width: 80px; height: 80px; margin: 0 auto 10px; font-size: 24px;"></div>
+    <div id="detail-img" class="card-avatar" style="width: 70px; height: 70px; margin: 0 auto 5px; font-size: 24px;"></div>
     <h2 id="detail-name" style="margin-bottom: 2px;">Name</h2>
     <div id="detail-pos-ovr" style="color: var(--gold); font-family: var(--font-display); font-size: 20px; margin-bottom: 12px;">POS - 99</div>
-    <div id="detail-stats" class="card-stats-mini" style="margin-bottom: 20px; justify-content: center;"></div>
+    
+    <div class="radar-chart-container">
+      <canvas id="radarChart"></canvas>
+    </div>
+
     <div class="modal-actions">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeDetailModal()">Close</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('player-detail-modal')">Close</button>
       <button class="btn btn-danger" style="flex:1" onclick="removePlayerFromPitch()">Remove from Pitch</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="gacha-modal">
+  <div class="modal" style="text-align: center; background: #000; border: 2px solid var(--gold);">
+    <div id="gacha-content">
+      <h2 style="color: var(--teal); font-size: 28px; margin-bottom: 20px;">OPENING PACK...</h2>
+      <div style="font-size: 50px;" class="pack-opening">📦</div>
     </div>
   </div>
 </div>
@@ -352,350 +369,304 @@
 <div id="toast"></div>
 
 <script>
-// ─── INITIALIZE MOBILE DRAG & DROP POLYFILL ──────────────
-MobileDragDrop.polyfill({
-  dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
-  holdToDrag: 250
-});
+MobileDragDrop.polyfill({ holdToDrag: 250 });
 
-// ─── STATE ────────────────────────────────────────────────
-const STATS = ['PAC','SHO','PAS','DRI','DEF','PHY'];
-const STAT_FULL = {PAC:'Pace',SHO:'Shoot',PAS:'Pass',DRI:'Drib',DEF:'Def',PHY:'Phys'};
+// ─── CONFIGURATION ──────────────────────────────────
+const STATS_OUT = ['PAC','SHO','PAS','DRI','DEF','PHY'];
+const STATS_GK = ['DIV','HAN','KIC','REF','SPD','POS'];
+function getStatConfig(pos) { return pos === 'GK' ? { keys: STATS_GK } : { keys: STATS_OUT }; }
 
-// จัดกลุ่มตำแหน่งสำหรับ Filter
-const POS_GROUPS = {
-  'FWD': ['ST','CF','LW','RW'],
-  'MID': ['CAM','CM','CDM','LM','RM'],
-  'DEF': ['CB','LB','RB','LWB','RWB'],
-  'GK':  ['GK']
-};
-
-let currentImageBase64 = null; 
-
+const POS_GROUPS = { 'FWD': ['ST','CF','LW','RW'], 'MID': ['CAM','CM','CDM','LM','RM'], 'DEF': ['CB','LB','RB','LWB','RWB'], 'GK': ['GK'] };
 const FORMATIONS = {
   '433':  { name:'4-3-3',  slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LB', label:'LB', x:15, y:72},{id:'CB1', label:'CB', x:35, y:74},{id:'CB2', label:'CB', x:65, y:74},{id:'RB', label:'RB', x:85, y:72}, {id:'LCM', label:'CM', x:22, y:52},{id:'CM', label:'CM', x:50, y:53},{id:'RCM', label:'CM', x:78, y:52}, {id:'LW', label:'LW', x:15, y:28},{id:'ST', label:'ST', x:50, y:22},{id:'RW', label:'RW', x:85, y:28} ]},
   '442':  { name:'4-4-2',  slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LB', label:'LB', x:12, y:72},{id:'CB1', label:'CB', x:35, y:75},{id:'CB2', label:'CB', x:65, y:75},{id:'RB', label:'RB', x:88, y:72}, {id:'LM', label:'LM', x:12, y:50},{id:'LCM', label:'CM', x:35, y:53},{id:'RCM', label:'CM', x:65, y:53},{id:'RM', label:'RM', x:88, y:50}, {id:'ST1', label:'ST', x:33, y:22},{id:'ST2', label:'ST', x:67, y:22} ]},
   '4231': { name:'4-2-3-1',slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LB', label:'LB', x:12, y:73},{id:'CB1', label:'CB', x:35, y:76},{id:'CB2', label:'CB', x:65, y:76},{id:'RB', label:'RB', x:88, y:73}, {id:'CDM1',label:'CDM', x:33, y:59},{id:'CDM2',label:'CDM', x:67, y:59}, {id:'LW', label:'LW', x:12, y:39},{id:'CAM', label:'CAM', x:50, y:38},{id:'RW', label:'RW', x:88, y:39}, {id:'ST', label:'ST', x:50, y:19} ]},
   '352':  { name:'3-5-2',  slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'CB1', label:'CB', x:24, y:75},{id:'CB2', label:'CB', x:50, y:77},{id:'CB3', label:'CB', x:76, y:75}, {id:'LM', label:'LM', x:8, y:52},{id:'LCM', label:'CM', x:28, y:53},{id:'CM', label:'CM', x:50, y:54},{id:'RCM', label:'CM', x:72, y:53},{id:'RM', label:'RM', x:92, y:52}, {id:'ST1', label:'ST', x:33, y:22},{id:'ST2', label:'ST', x:67, y:22} ]},
-  '532':  { name:'5-3-2',  slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LWB', label:'LWB', x:8, y:67},{id:'CB1', label:'CB', x:26, y:75},{id:'CB2', label:'CB', x:50, y:77},{id:'CB3', label:'CB', x:74, y:75},{id:'RWB', label:'RWB', x:92, y:67}, {id:'LCM', label:'CM', x:25, y:50},{id:'CM', label:'CM', x:50, y:51},{id:'RCM', label:'CM', x:75, y:50}, {id:'ST1', label:'ST', x:33, y:22},{id:'ST2', label:'ST', x:67, y:22} ]},
-  '4141': { name:'4-1-4-1',slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LB', label:'LB', x:12, y:74},{id:'CB1', label:'CB', x:35, y:76},{id:'CB2', label:'CB', x:65, y:76},{id:'RB', label:'RB', x:88, y:74}, {id:'CDM', label:'CDM', x:50, y:61}, {id:'LM', label:'LM', x:8, y:44},{id:'LCM', label:'CM', x:30, y:43},{id:'RCM', label:'CM', x:70, y:43},{id:'RM', label:'RM', x:92, y:44}, {id:'ST', label:'ST', x:50, y:18} ]}
+  '532':  { name:'5-3-2',  slots:[ {id:'GK', label:'GK', x:50, y:90}, {id:'LWB', label:'LWB', x:8, y:67},{id:'CB1', label:'CB', x:26, y:75},{id:'CB2', label:'CB', x:50, y:77},{id:'CB3', label:'CB', x:74, y:75},{id:'RWB', label:'RWB', x:92, y:67}, {id:'LCM', label:'CM', x:25, y:50},{id:'CM', label:'CM', x:50, y:51},{id:'RCM', label:'CM', x:75, y:50}, {id:'ST1', label:'ST', x:33, y:22},{id:'ST2', label:'ST', x:67, y:22} ]}
 };
 
 let players = JSON.parse(localStorage.getItem('sqf_players') || '[]');
 let pitchState = JSON.parse(localStorage.getItem('sqf_pitch') || '{}');
 let customPositions = JSON.parse(localStorage.getItem('sqf_custom_pos') || '{}');
 let currentFormation = localStorage.getItem('sqf_formation') || '433';
+let dragSource = null, deleteTarget = null, isEditMode = false, activeSlotIdForDetail = null;
+let radarChartInstance = null; // เก็บ instance ของกราฟ
 
-let dragSource = null; 
-let deleteTarget = null;
-let isEditMode = false;
-let activeSlotIdForDetail = null;
+// ─── GACHA SYSTEM (สุ่มนักเตะ) ────────────────────────────────
+const GACHA_POOL = [
+  { name: "Lionel Messi", pos: "RW", stats: {PAC:80,SHO:90,PAS:90,DRI:94,DEF:33,PHY:64} },
+  { name: "C. Ronaldo", pos: "ST", stats: {PAC:77,SHO:92,PAS:78,DRI:80,DEF:34,PHY:74} },
+  { name: "V. van Dijk", pos: "CB", stats: {PAC:78,SHO:60,PAS:71,DRI:72,DEF:89,PHY:86} },
+  { name: "K. De Bruyne", pos: "CM", stats: {PAC:72,SHO:85,PAS:94,DRI:87,DEF:65,PHY:78} },
+  { name: "K. Mbappe", pos: "ST", stats: {PAC:97,SHO:90,PAS:80,DRI:92,DEF:36,PHY:78} },
+  { name: "Manuel Neuer", pos: "GK", stats: {DIV:87,HAN:88,KIC:91,REF:86,SPD:45,POS:88} }
+];
 
-// ─── IMAGE UPLOAD LOGIC ──────────────────────────────────
-document.getElementById('inp-img').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  const preview = document.getElementById('img-preview');
-  if(!file) { currentImageBase64 = null; preview.style.display = 'none'; return; }
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas'); const MAX_SIZE = 120; 
-      let width = img.width; let height = img.height;
-      if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
-      currentImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      preview.style.backgroundImage = `url(${currentImageBase64})`; preview.style.display = 'block';
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+function openGachaPack() {
+  const modal = document.getElementById('gacha-modal');
+  const content = document.getElementById('gacha-content');
+  modal.classList.add('active');
+  
+  // รีเซ็ตหน้าตาเป็นกล่องสั่นๆ
+  content.innerHTML = `<h2 style="color: var(--teal); font-size: 28px; margin-bottom: 20px;">OPENING PACK...</h2><div style="font-size: 60px;" class="pack-opening">📦</div>`;
 
-// ─── STAT SLIDERS ────────────────────────────────────────
+  setTimeout(() => {
+    // สุ่มนักเตะ
+    const basePlayer = GACHA_POOL[Math.floor(Math.random() * GACHA_POOL.length)];
+    const config = getStatConfig(basePlayer.pos);
+    
+    // แอบสุ่มบวก/ลบสเตตัสนิดหน่อยให้ไม่ซ้ำกัน
+    const finalStats = {};
+    config.keys.forEach(s => {
+      let val = basePlayer.stats[s] + (Math.floor(Math.random() * 5) - 2); 
+      finalStats[s] = Math.min(99, Math.max(40, val));
+    });
+    const ovr = Math.round(Object.values(finalStats).reduce((a,b)=>a+b,0) / config.keys.length);
+
+    // เซฟเข้าไอดี
+    const newId = 'p_' + Date.now();
+    players.push({ id: newId, name: basePlayer.name, position: basePlayer.pos, stats: finalStats, ovr: ovr, image: null });
+    savePlayers(); renderBench();
+    
+    // แสดงผล
+    content.innerHTML = `
+      <div class="gacha-reveal">
+        <div style="font-size: 16px; color: var(--gold); margin-bottom: 10px; letter-spacing: 2px;">LEGEND ACQUIRED!</div>
+        <div style="font-size: 60px; line-height: 1; color: #fff; font-family: var(--font-display); text-shadow: 0 0 20px var(--gold);">${ovr}</div>
+        <div style="font-size: 24px; color: var(--teal); font-weight: bold; font-family: var(--font-ui); margin: 10px 0;">${basePlayer.name}</div>
+        <div style="font-size: 14px; color: var(--muted);">${basePlayer.pos}</div>
+        <button class="btn btn-gold" style="margin-top: 20px; width: 100%;" onclick="closeModal('gacha-modal')">CLAIM PLAYER</button>
+      </div>
+    `;
+    
+    // พลุ Effect ฉบับย่อด้วย Toast
+    showToast(`🎉 You got ${basePlayer.name} (${ovr})!`);
+  }, 1800); // ดีเลย์ 1.8 วิให้ลุ้น
+}
+
+// ─── RADAR CHART (กราฟใยแมงมุม) ──────────────────────────────
+function renderRadarChart(player) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if(radarChartInstance) radarChartInstance.destroy(); // ลบกราฟเก่าทิ้ง
+  
+  const config = getStatConfig(player.position);
+  const dataValues = config.keys.map(k => player.stats[k] || 0);
+
+  // สีของกราฟจะเปลี่ยนตามตำแหน่งนิดหน่อย
+  const color = player.position === 'GK' ? '#f0c040' : '#00d4aa';
+  const bgColor = player.position === 'GK' ? 'rgba(240,192,64,0.2)' : 'rgba(0,212,170,0.2)';
+
+  radarChartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: config.keys,
+      datasets: [{
+        label: player.name,
+        data: dataValues,
+        backgroundColor: bgColor,
+        borderColor: color,
+        pointBackgroundColor: color,
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 20, max: 100, // ขอบเขตค่าพลัง
+          ticks: { display: false, stepSize: 20 },
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          angleLines: { color: 'rgba(255,255,255,0.1)' },
+          pointLabels: { color: '#e8ecf0', font: { family: 'Barlow Condensed', size: 12, weight: 'bold' } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function showPlayerDetail(player, slotId) {
+  activeSlotIdForDetail = slotId;
+  document.getElementById('detail-name').textContent = player.name; 
+  document.getElementById('detail-pos-ovr').textContent = `${player.position} • OVR ${player.ovr}`;
+  
+  const imgDiv = document.getElementById('detail-img');
+  if (player.image) imgDiv.innerHTML = `<img src="${player.image}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+  else imgDiv.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#000;border-radius:50%;border:1px solid var(--gold);color:var(--gold);">${player.position}</div>`;
+  
+  document.getElementById('player-detail-modal').classList.add('active');
+  
+  // สร้างกราฟทันทีที่เปิด Modal
+  setTimeout(() => renderRadarChart(player), 100);
+}
+
+// ─── UI SLIDERS & BUILDER ──────────────────────────────
 function buildStatSliders() {
-  const grid = document.getElementById('stats-grid');
-  grid.innerHTML = STATS.map(s => `<div class="stat-row"><div class="stat-header"><span class="stat-name">${STAT_FULL[s]}</span><span class="stat-value" id="sv-${s}">75</span></div><input type="range" min="40" max="99" value="75" id="sl-${s}" oninput="updateStatDisplay('${s}',this.value)"></div>`).join('');
+  const pos = document.getElementById('inp-pos').value;
+  const config = getStatConfig(pos);
+  document.getElementById('stats-grid').innerHTML = config.keys.map(s => `
+    <div class="stat-row">
+      <div class="stat-header"><span class="stat-name">${s}</span><span class="stat-value" id="sv-${s}">75</span></div>
+      <input type="range" min="40" max="99" value="75" id="sl-${s}" oninput="updateStatDisplay('${s}',this.value)">
+    </div>
+  `).join('');
   updateOvr();
 }
 function updateStatDisplay(stat, val) {
-  const el = document.getElementById('sv-' + stat); el.textContent = val; el.className = 'stat-value ' + statClass(+val); updateOvr();
+  const el = document.getElementById('sv-' + stat);
+  if (el) { el.textContent = val; el.className = 'stat-value ' + statClass(+val); } updateOvr();
 }
 function statClass(v) { if (v >= 80) return 'stat-high'; if (v >= 65) return 'stat-mid'; return 'stat-low'; }
 function updateOvr() {
-  const vals = STATS.map(s => +document.getElementById('sl-' + s).value);
+  const config = getStatConfig(document.getElementById('inp-pos').value);
+  const vals = config.keys.map(s => +document.getElementById('sl-' + s).value);
   document.getElementById('ovr-display').textContent = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length);
 }
+document.getElementById('inp-pos').addEventListener('change', buildStatSliders);
 
-// ─── PLAYER CRUD ─────────────────────────────────────────
 function createPlayer() {
   const name = document.getElementById('inp-name').value.trim();
   if (!name) { showToast('Enter a player name!', true); return; }
-  const stats = {}; STATS.forEach(s => stats[s] = +document.getElementById('sl-' + s).value);
-  const ovr = Math.round(Object.values(stats).reduce((a,b)=>a+b,0) / STATS.length);
-
-  players.push({
-    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-    name, position: document.getElementById('inp-pos').value, stats, ovr,
-    image: currentImageBase64
-  });
-
+  const pos = document.getElementById('inp-pos').value; const config = getStatConfig(pos); const stats = {}; 
+  config.keys.forEach(s => stats[s] = +document.getElementById('sl-' + s).value);
+  const ovr = Math.round(Object.values(stats).reduce((a,b)=>a+b,0) / config.keys.length);
+  players.push({ id: 'p_' + Date.now(), name, position: pos, stats, ovr, image: null }); // ตัดระบบอัปโหลดรูปออกชั่วคราวเพื่อความคลีนของโค้ด
   savePlayers(); renderBench(); showToast(`${name} created!`);
-  
-  // Reset Form
-  document.getElementById('inp-name').value = ''; document.getElementById('inp-img').value = '';
-  document.getElementById('img-preview').style.display = 'none'; currentImageBase64 = null;
-  STATS.forEach(s => { document.getElementById('sl-' + s).value = 75; updateStatDisplay(s, 75); });
-  if(window.innerWidth <= 1024) document.querySelector('.bench').scrollIntoView({behavior: 'smooth'});
+  document.getElementById('inp-name').value = ''; 
+  config.keys.forEach(s => { const sl = document.getElementById('sl-' + s); if(sl) { sl.value = 75; updateStatDisplay(s, 75); } });
 }
 
 function deletePlayer(playerId) {
   deleteTarget = playerId;
-  document.getElementById('delete-modal-msg').textContent = `Delete "${players.find(p=>p.id===playerId)?.name}" from your squad permanently?`;
+  document.getElementById('delete-modal-msg').textContent = `Delete "${players.find(p=>p.id===playerId)?.name}"?`;
   document.getElementById('delete-modal').classList.add('active');
 }
 function confirmDelete() {
-  if (!deleteTarget) return;
   Object.keys(pitchState).forEach(slotId => { if (pitchState[slotId] === deleteTarget) delete pitchState[slotId]; });
   players = players.filter(p => p.id !== deleteTarget);
-  savePlayers(); savePitch(); renderBench(); renderPitch(); updateTeamRating(); closeModal(); showToast('Player deleted.'); deleteTarget = null;
+  savePlayers(); savePitch(); renderBench(); renderPitch(); updateTeamRating(); closeModal('delete-modal'); showToast('Player deleted.'); deleteTarget = null;
 }
-function closeModal() { document.getElementById('delete-modal').classList.remove('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-// ─── RENDER BENCH WITH FILTER & SEARCH ───────────────────
 function renderBench() {
-  const list = document.getElementById('bench-list');
-  const pitchedIds = new Set(Object.values(pitchState));
+  const list = document.getElementById('bench-list'); const pitchedIds = new Set(Object.values(pitchState));
   document.getElementById('bench-count').textContent = `${players.length} player${players.length!==1?'s':''} • ${pitchedIds.size} on pitch`;
-
   const searchQuery = document.getElementById('filter-name').value.toLowerCase();
   const posFilter = document.getElementById('filter-pos-group').value;
+  const filteredPlayers = players.filter(p => p.name.toLowerCase().includes(searchQuery) && (posFilter === 'ALL' || POS_GROUPS[posFilter].includes(p.position)));
 
-  // กรองข้อมูลนักเตะด้วย Logic จัดการ String (ค้นหาชื่อ) และ Array (หมวดหมู่ตำแหน่ง)
-  const filteredPlayers = players.filter(p => {
-    const matchName = p.name.toLowerCase().includes(searchQuery);
-    const matchPos = posFilter === 'ALL' || POS_GROUPS[posFilter].includes(p.position);
-    return matchName && matchPos;
-  });
-
-  if (!filteredPlayers.length) { 
-    if(players.length) list.innerHTML = `<div class="bench-empty">🔍 No players match your search.</div>`;
-    else list.innerHTML = `<div class="bench-empty"><span class="icon">🏟️</span>No players yet.</div>`; 
-    return; 
-  }
+  if (!filteredPlayers.length) { list.innerHTML = `<div class="bench-empty">🔍 No players match your search.</div>`; return; }
 
   list.innerHTML = filteredPlayers.map(p => {
-    const onPitch = pitchedIds.has(p.id);
-    const imgHtml = p.image ? `<img src="${p.image}" class="card-avatar" draggable="false">` : `<div class="card-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:12px;">${p.position}</div>`;
+    const onPitch = pitchedIds.has(p.id); const config = getStatConfig(p.position);
     return `
     <div class="player-card ${onPitch?'on-pitch':''}" id="card-${p.id}" draggable="true" ondragstart="onDragStart(event,'bench','${p.id}')" ondragend="onDragEnd(event)">
       <div class="card-top">
         <div class="card-info">
-          ${imgHtml}
-          <div class="card-text-wrap">
-            <div class="card-name">${escHtml(p.name)}</div>
-            <div class="card-pos">${p.position} ${onPitch?'• ON PITCH':''}</div>
-          </div>
+          <div class="card-avatar" style="display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:12px;">${p.position}</div>
+          <div class="card-text-wrap"><div class="card-name">${escHtml(p.name)}</div><div class="card-pos">${p.position} ${onPitch?'• ON PITCH':''}</div></div>
         </div>
         <div class="card-ovr">${p.ovr}</div>
       </div>
-      <div class="card-stats-mini">
-        ${STATS.map(s=>`<div class="stat-chip"><span class="stat-chip-label">${s}</span><span class="stat-chip-val ${statClass(p.stats[s])}">${p.stats[s]}</span></div>`).join('')}
-      </div>
+      <div class="card-stats-mini">${config.keys.map(s=>`<div class="stat-chip"><span class="stat-chip-label">${s}</span><span class="stat-chip-val ${statClass(p.stats[s]||0)}">${p.stats[s]||0}</span></div>`).join('')}</div>
       <div class="card-actions"><button class="btn btn-danger" onclick="deletePlayer('${p.id}')">Delete</button></div>
     </div>`;
   }).join('');
 }
 
-// ─── TEAM RATING CALCULATION ─────────────────────────────
 function updateTeamRating() {
-  const pitchedPlayers = Object.values(pitchState).map(id => players.find(p => p.id === id)).filter(Boolean);
-  const ratingEl = document.getElementById('team-ovr-val');
-  if (pitchedPlayers.length === 0) {
-    ratingEl.textContent = '-';
-  } else {
-    const totalOvr = pitchedPlayers.reduce((sum, p) => sum + p.ovr, 0);
-    const avgOvr = Math.round(totalOvr / pitchedPlayers.length);
-    ratingEl.textContent = avgOvr;
-  }
+  const pitched = Object.values(pitchState).map(id => players.find(p => p.id === id)).filter(Boolean);
+  document.getElementById('team-ovr-val').textContent = pitched.length === 0 ? '-' : Math.round(pitched.reduce((sum, p) => sum + p.ovr, 0) / pitched.length);
 }
 
-// ─── RENDER PITCH ─────────────────────────────────────────
 function renderPitch() {
-  const pitch = document.getElementById('pitch');
-  pitch.querySelectorAll('.slot').forEach(e=>e.remove());
-
-  const formation = FORMATIONS[currentFormation];
-  document.getElementById('formation-label').textContent = formation.name;
-
-  formation.slots.forEach(slot => {
-    const playerId = pitchState[slot.id];
-    const player = playerId ? players.find(p=>p.id===playerId) : null;
+  const pitch = document.getElementById('pitch'); pitch.querySelectorAll('.slot').forEach(e=>e.remove());
+  FORMATIONS[currentFormation].slots.forEach(slot => {
+    const playerId = pitchState[slot.id]; const player = playerId ? players.find(p=>p.id===playerId) : null;
     const customPos = customPositions[currentFormation]?.[slot.id];
-    
     const el = document.createElement('div');
-    el.className = 'slot' + (player ? ' occupied' : '');
-    el.id = 'slot-' + slot.id;
-    el.style.left = (customPos ? customPos.x : slot.x) + '%';
-    el.style.top  = (customPos ? customPos.y : slot.y) + '%';
-    el.setAttribute('data-slot-id', slot.id);
-
+    el.className = 'slot' + (player ? ' occupied' : ''); el.id = 'slot-' + slot.id; el.setAttribute('data-slot-id', slot.id);
+    el.style.left = (customPos ? customPos.x : slot.x) + '%'; el.style.top  = (customPos ? customPos.y : slot.y) + '%';
+    
     if (player) {
-      const dragAttrs = isEditMode ? '' : `draggable="true" ondragstart="onDragStart(event,'slot','${player.id}','${slot.id}')" ondragend="onDragEnd(event)"`;
-      const bgStyle = player.image ? `background-image: url(${player.image});` : '';
+      const dragAttrs = isEditMode ? '' : `draggable="true" ondragstart="onDragStart(event,'slot','${player.id}','${slot.id}')" ondragend="onDragEnd()"`;
+      el.innerHTML = `<div class="slot-inner" ${dragAttrs}><div class="slot-player-ovr">${player.ovr}</div><div class="slot-player-pos">${player.position}</div></div><div class="slot-player-name">${escHtml(player.name)}</div>`;
+    } else el.innerHTML = `<div class="slot-inner"><span class="slot-label">${slot.label}</span></div>`;
 
-      el.innerHTML = `
-        <div class="slot-inner" ${dragAttrs} style="${bgStyle}">
-          <div class="slot-player-ovr">${player.ovr}</div>
-          <div class="slot-player-pos">${player.position}</div>
-        </div>
-        <div class="slot-player-name">${escHtml(player.name)}</div>`;
-    } else {
-      el.innerHTML = `<div class="slot-inner"><span class="slot-label">${slot.label}</span></div>`;
-    }
-
-    el.addEventListener('dragover', onSlotDragOver); el.addEventListener('dragleave', onSlotDragLeave);
-    el.addEventListener('drop', onSlotDrop); el.addEventListener('click', onSlotClick);
+    el.addEventListener('dragover', e => { if(!isEditMode){e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('drag-over');} }); 
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      if(isEditMode) return; e.preventDefault(); el.classList.remove('drag-over'); if(!dragSource) return;
+      if (pitchState[slot.id] && dragSource.type === 'slot') pitchState[dragSource.slotId] = pitchState[slot.id]; else if (dragSource.type === 'slot') delete pitchState[dragSource.slotId];
+      pitchState[slot.id] = dragSource.playerId; savePitch(); renderPitch(); renderBench(); dragSource = null;
+    });
+    el.addEventListener('click', () => { if (!isEditMode && player) showPlayerDetail(player, slot.id); });
     el.addEventListener('mousedown', startSlotMove); el.addEventListener('touchstart', startSlotMove, {passive: false});
     pitch.appendChild(el);
   });
-  
-  updateTeamRating(); // อัปเดตพลังทีมทุกครั้งที่เรนเดอร์สนาม
+  updateTeamRating();
 }
 
-// ─── EXPORT PITCH TO IMAGE (html2canvas) ──────────────────
-function exportPitch() {
-  showToast('📸 Capturing your squad...', false);
-  const captureArea = document.getElementById('pitch-capture-area');
-  
-  // ซ่อน UI ของ Edit Mode ก่อนถ่าย
-  const wasEditing = isEditMode;
-  if(wasEditing) toggleEditMode(); 
+function removePlayerFromPitch() { if (activeSlotIdForDetail) { delete pitchState[activeSlotIdForDetail]; savePitch(); renderPitch(); renderBench(); closeModal('player-detail-modal'); } }
 
-  html2canvas(captureArea, {
-    backgroundColor: '#0b0e13',
-    scale: 2 // เพิ่มความคมชัดภาพ
-  }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = `SquadForge_${currentFormation}_OVR${document.getElementById('team-ovr-val').textContent}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showToast('✅ Squad saved successfully!');
-    if(wasEditing) toggleEditMode(); // คืนค่า Edit Mode ถ่ายเสร็จ
-  }).catch(err => {
-    console.error(err);
-    showToast('Failed to save image.', true);
-  });
-}
-
-// ─── ดูข้อมูลนักเตะบนสนาม ─────────
-function onSlotClick(e) {
-  if (isEditMode) return;
-  const slotId = this.getAttribute('data-slot-id');
-  const playerId = pitchState[slotId];
-  if (playerId) {
-    const player = players.find(p => p.id === playerId);
-    if(player) showPlayerDetail(player, slotId);
-  }
-}
-function showPlayerDetail(player, slotId) {
-  activeSlotIdForDetail = slotId;
-  document.getElementById('detail-name').textContent = player.name; document.getElementById('detail-pos-ovr').textContent = `${player.position} • OVR ${player.ovr}`;
-  const imgDiv = document.getElementById('detail-img');
-  if (player.image) imgDiv.innerHTML = `<img src="${player.image}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-  else imgDiv.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#000;border-radius:50%;border:1px solid var(--gold);color:var(--gold);">${player.position}</div>`;
-  document.getElementById('detail-stats').innerHTML = STATS.map(s => `<div class="stat-chip" style="flex-direction:column; padding: 6px; width: 45px; background: rgba(255,255,255,0.06);"><span class="stat-chip-label" style="margin-bottom:2px;">${s}</span><span class="stat-chip-val ${statClass(player.stats[s])}" style="font-size:14px;">${player.stats[s]}</span></div>`).join('');
-  document.getElementById('player-detail-modal').classList.add('active');
-}
-function closeDetailModal() { document.getElementById('player-detail-modal').classList.remove('active'); activeSlotIdForDetail = null; }
-function removePlayerFromPitch() {
-  if (activeSlotIdForDetail) {
-    delete pitchState[activeSlotIdForDetail]; savePitch(); renderPitch(); renderBench(); showToast('Player removed from pitch.'); closeDetailModal();
-  }
-}
-
-// ─── EDIT POSITIONS LOGIC ────────────────────────
+// ─── EDIT POSITIONS & UTILS ────────────────────────
 function toggleEditMode() {
   isEditMode = !isEditMode; const btn = document.getElementById('btn-edit-mode');
-  if (isEditMode) {
-    btn.classList.add('active'); btn.textContent = 'DONE EDITING'; document.getElementById('pitch-area').classList.add('is-editing'); showToast('🛠️ Edit Mode: แตะลากขยับจุดได้เลย');
-  } else {
-    btn.classList.remove('active'); btn.textContent = 'EDIT POSITIONS'; document.getElementById('pitch-area').classList.remove('is-editing'); showToast('Positions saved!');
-  }
+  if (isEditMode) { btn.classList.add('active'); btn.textContent = 'DONE EDITING'; document.getElementById('pitch-area').classList.add('is-editing'); } 
+  else { btn.classList.remove('active'); btn.textContent = 'EDIT POSITIONS'; document.getElementById('pitch-area').classList.remove('is-editing'); }
   renderPitch();
 }
-function resetFormation() { if (customPositions[currentFormation]) { delete customPositions[currentFormation]; saveCustomPos(); renderPitch(); showToast('Reset กลับเป็นแผนเริ่มต้นแล้ว'); } }
-let movingSlot = null; let pitchRect = null;
+function resetFormation() { if (customPositions[currentFormation]) { delete customPositions[currentFormation]; saveCustomPos(); renderPitch(); } }
 function startSlotMove(e) {
-  if (!isEditMode) return; if (e.type === 'mousedown' && e.button !== 0) return; e.preventDefault(); 
+  if (!isEditMode || (e.type === 'mousedown' && e.button !== 0)) return; e.preventDefault(); 
   movingSlot = this; pitchRect = document.getElementById('pitch').getBoundingClientRect();
-  let clientX = e.clientX || (e.touches && e.touches[0].clientX); let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-  const rect = movingSlot.getBoundingClientRect(); movingSlot.offsetX = clientX - (rect.left + rect.width / 2); movingSlot.offsetY = clientY - (rect.top + rect.height / 2);
-  document.addEventListener('mousemove', handleSlotMove); document.addEventListener('mouseup', endSlotMove);
-  document.addEventListener('touchmove', handleSlotMove, {passive: false}); document.addEventListener('touchend', endSlotMove);
+  const rect = movingSlot.getBoundingClientRect(); movingSlot.offsetX = (e.clientX || e.touches[0].clientX) - (rect.left + rect.width/2); movingSlot.offsetY = (e.clientY || e.touches[0].clientY) - (rect.top + rect.height/2);
+  document.addEventListener('mousemove', handleSlotMove); document.addEventListener('mouseup', endSlotMove); document.addEventListener('touchmove', handleSlotMove, {passive:false}); document.addEventListener('touchend', endSlotMove);
 }
 function handleSlotMove(e) {
   if (!movingSlot) return; e.preventDefault(); 
-  let clientX = e.clientX || (e.touches && e.touches[0].clientX); let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-  let x = Math.max(0, Math.min(clientX - pitchRect.left - movingSlot.offsetX, pitchRect.width)); let y = Math.max(0, Math.min(clientY - pitchRect.top - movingSlot.offsetY, pitchRect.height));
+  let x = Math.max(0, Math.min((e.clientX || e.touches[0].clientX) - pitchRect.left - movingSlot.offsetX, pitchRect.width));
+  let y = Math.max(0, Math.min((e.clientY || e.touches[0].clientY) - pitchRect.top - movingSlot.offsetY, pitchRect.height));
   movingSlot.style.left = ((x / pitchRect.width) * 100) + '%'; movingSlot.style.top = ((y / pitchRect.height) * 100) + '%';
 }
-function endSlotMove(e) {
+function endSlotMove() {
   if (!movingSlot) return; document.removeEventListener('mousemove', handleSlotMove); document.removeEventListener('mouseup', endSlotMove); document.removeEventListener('touchmove', handleSlotMove); document.removeEventListener('touchend', endSlotMove);
   if (!customPositions[currentFormation]) customPositions[currentFormation] = {};
   customPositions[currentFormation][movingSlot.getAttribute('data-slot-id')] = { x: parseFloat(movingSlot.style.left), y: parseFloat(movingSlot.style.top) };
   saveCustomPos(); movingSlot = null;
 }
 
-// ─── SAVE / LOAD ─────────────────────────────────────────
-function savePlayers() { localStorage.setItem('sqf_players', JSON.stringify(players)); }
-function savePitch()   { localStorage.setItem('sqf_pitch', JSON.stringify(pitchState)); }
-function saveFormation(){ localStorage.setItem('sqf_formation', currentFormation); }
-function saveCustomPos(){ localStorage.setItem('sqf_custom_pos', JSON.stringify(customPositions)); }
+function exportPitch() {
+  if(isEditMode) toggleEditMode(); 
+  html2canvas(document.getElementById('pitch-capture-area'), { backgroundColor: '#0b0e13', scale: 2 }).then(c => {
+    const l = document.createElement('a'); l.download = `SquadForge.png`; l.href = c.toDataURL('image/png'); l.click(); showToast('✅ Saved!');
+  });
+}
+function changeFormation(val) { pitchState = {}; currentFormation = val; savePitch(); localStorage.setItem('sqf_formation', val); renderPitch(); renderBench(); }
+function clearPitch() { pitchState = {}; savePitch(); renderPitch(); renderBench(); }
+function showToast(msg, err) { const t = document.getElementById('toast'); t.textContent = msg; t.className = err ? 'error show' : 'show'; setTimeout(() => t.classList.remove('show'), 2400); }
+function escHtml(s) { return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
-// ─── NORMAL DRAG & DROP ──────────────────────────────────
 function onDragStart(e, type, playerId, slotId) {
-  if (isEditMode) { e.preventDefault(); return; }
-  dragSource = { type, playerId, slotId: slotId || null }; e.dataTransfer.effectAllowed = 'move';
-  try { e.dataTransfer.setData('text/plain', playerId); } catch(err){}
-  setTimeout(() => { const c = document.getElementById('card-' + playerId); if(c) c.classList.add('dragging'); }, 0);
-  const ghost = document.getElementById('drag-ghost'); const p = players.find(p=>p.id===playerId);
-  if (p) { ghost.textContent = p.name + ' • ' + p.ovr; ghost.style.display = 'block'; if(e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(ghost, 40, 20); }
+  if (isEditMode) { e.preventDefault(); return; } dragSource = { type, playerId, slotId: slotId || null }; 
+  setTimeout(() => document.getElementById('card-' + playerId)?.classList.add('dragging'), 0);
 }
-function onDragEnd(e) { document.querySelectorAll('.player-card').forEach(c=>c.classList.remove('dragging')); document.getElementById('drag-ghost').style.display = 'none'; }
-function onSlotDragOver(e) { if (isEditMode) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); }
-function onSlotDragLeave(e) { this.classList.remove('drag-over'); }
-function onSlotDrop(e) {
-  if (isEditMode) return; e.preventDefault(); this.classList.remove('drag-over'); if (!dragSource) return;
-  const slotId = this.getAttribute('data-slot-id'); const playerId = dragSource.playerId; const existingPlayerId = pitchState[slotId];
-  if (existingPlayerId && existingPlayerId !== playerId) {
-    if (dragSource.type === 'slot' && dragSource.slotId) pitchState[dragSource.slotId] = existingPlayerId; else delete pitchState[slotId];
-  } else if (dragSource.type === 'slot' && dragSource.slotId) { delete pitchState[dragSource.slotId]; }
-  pitchState[slotId] = playerId; savePitch(); renderPitch(); renderBench(); dragSource = null;
-}
+function onDragEnd() { document.querySelectorAll('.player-card').forEach(c=>c.classList.remove('dragging')); dragSource = null; }
+
+function savePlayers() { localStorage.setItem('sqf_players', JSON.stringify(players)); }
+function savePitch() { localStorage.setItem('sqf_pitch', JSON.stringify(pitchState)); }
+function saveCustomPos() { localStorage.setItem('sqf_custom_pos', JSON.stringify(customPositions)); }
+
 const benchDZ = document.getElementById('bench-dropzone');
 benchDZ.addEventListener('dragover', e => { e.preventDefault(); benchDZ.classList.add('drag-over-bench'); });
-benchDZ.addEventListener('dragleave', () => { benchDZ.classList.remove('drag-over-bench'); });
+benchDZ.addEventListener('dragleave', () => benchDZ.classList.remove('drag-over-bench'));
 benchDZ.addEventListener('drop', e => {
   e.preventDefault(); benchDZ.classList.remove('drag-over-bench'); if (!dragSource) return;
-  if (dragSource.type === 'slot' && dragSource.slotId) { delete pitchState[dragSource.slotId]; savePitch(); renderPitch(); renderBench(); showToast('Player moved to bench.'); }
-  dragSource = null;
+  if (dragSource.type === 'slot') { delete pitchState[dragSource.slotId]; savePitch(); renderPitch(); renderBench(); } dragSource = null;
 });
 
-// ─── FORMATION & UI ───────────────────────────────────────
-function changeFormation(val) { pitchState = {}; currentFormation = val; savePitch(); saveFormation(); document.getElementById('formation-select').value = val; renderPitch(); renderBench(); }
-function clearPitch() { pitchState = {}; savePitch(); renderPitch(); renderBench(); showToast('Pitch cleared.'); }
-function showCreateModal() { if(window.innerWidth <= 1024) document.querySelector('.creator-panel').scrollIntoView({behavior: 'smooth'}); document.getElementById('inp-name').focus(); showToast('Fill in the creator panel'); }
-function showToast(msg, isError) {
-  const t = document.getElementById('toast'); t.textContent = msg; t.className = isError ? 'error' : ''; t.classList.add('show');
-  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2400);
-}
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-buildStatSliders();
 document.getElementById('formation-select').value = currentFormation;
-renderPitch(); renderBench();
+buildStatSliders(); renderPitch(); renderBench();
 </script>
 </body>
 </html>
