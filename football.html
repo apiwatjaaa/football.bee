@@ -34,9 +34,6 @@
     --muted:         #6b7280;
     --card:          #1c2233;
     --card-hover:    #212840;
-    --slot-empty:    rgba(255,255,255,0.07);
-    --slot-hover:    rgba(0,212,170,0.2);
-    --slot-over:     rgba(0,212,170,0.45);
     --radius:        10px;
     --font-display:  'Bebas Neue', sans-serif;
     --font-ui:       'Barlow Condensed', sans-serif;
@@ -52,17 +49,14 @@
   .logo span { color: var(--teal); }
   .header-actions { display: flex; gap: 10px; }
   .btn { font-family: var(--font-ui); font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 7px 18px; border-radius: 6px; border: none; cursor: pointer; transition: all .2s ease; }
-  .btn:hover { transform: translateY(-1px); }
-  .btn-gold { background: var(--gold); color: #0b0e13; box-shadow: 0 2px 5px rgba(240,192,64,0.2); } .btn-gold:hover { background: var(--gold2); box-shadow: 0 4px 12px rgba(240,192,64,0.4); }
-  .btn-teal { background: var(--teal); color: #0b0e13; box-shadow: 0 2px 5px rgba(0,212,170,0.2); } .btn-teal:hover { background: #00ebd0; box-shadow: 0 4px 12px rgba(0,212,170,0.4); }
+  .btn-gold { background: var(--gold); color: #0b0e13; box-shadow: 0 2px 5px rgba(240,192,64,0.2); } .btn-gold:hover { background: var(--gold2); box-shadow: 0 4px 12px rgba(240,192,64,0.4); transform: translateY(-1px); }
+  .btn-teal { background: var(--teal); color: #0b0e13; box-shadow: 0 2px 5px rgba(0,212,170,0.2); } .btn-teal:hover { background: #00ebd0; box-shadow: 0 4px 12px rgba(0,212,170,0.4); transform: translateY(-1px); }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); } .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
   .btn-danger { background: transparent; border: 1px solid rgba(255,77,77,0.3); color: var(--red); font-size: 12px; padding: 4px 10px; } .btn-danger:hover { background: rgba(255,77,77,0.15); }
   .btn-edit { background: transparent; border: 1px solid var(--gold); color: var(--gold); } .btn-edit:hover { background: rgba(240,192,64,0.1); } .btn-edit.active { background: var(--gold); color: #0b0e13; box-shadow: 0 0 10px rgba(240,192,64,0.4); }
 
   /* ─── LAYOUT ────────────────────────────────────────────── */
   .app { flex: 1; display: grid; grid-template-columns: 320px 1fr 290px; overflow: hidden; }
-
-  /* ─── SIDEBAR — BENCH ───────────────────────────────────── */
   .bench { background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
   .panel-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .panel-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--gold); }
@@ -77,15 +71,15 @@
   .bench-list::-webkit-scrollbar { width: 4px; } .bench-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .bench-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 16px; font-family: var(--font-ui); line-height: 1.7; }
 
-  /* ─── PLAYER CARD (HOLOGRAM EFFECT + TILT) ─────────────────────── */
+  /* ─── PLAYER CARD (สำคัญ: touch-action none เพื่อให้ลากบนมือถือได้) ─── */
   .player-card { 
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; 
-    cursor: grab; transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); user-select: none; position: relative; overflow: hidden; touch-action: pan-y; 
-    will-change: transform, box-shadow;
+    cursor: grab; transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); user-select: none; position: relative; overflow: hidden; 
+    touch-action: none; /* ล็อกการเลื่อนจอ ให้กลายเป็นการลาก */
   }
   .player-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); border-radius: 3px 0 0 3px; z-index: 2;}
 
-  /* Hologram Shine Effect */
+  /* Hologram Effect */
   .player-card::after {
     content: ''; position: absolute; top: -50%; left: -100%; width: 30%; height: 200%;
     background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%);
@@ -99,8 +93,8 @@
     transform: translateX(4px) translateY(-2px) scale(1.03) !important; 
     box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 10px var(--gold-glow);
   }
-
   .player-card.dragging { opacity: 0.4; transform: scale(0.95); } .player-card.on-pitch::before { background: var(--teal); }
+  
   .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; position: relative; z-index: 5;}
   .card-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 1px solid var(--gold); background: #000; }
   .card-info { flex: 1; min-width: 0; display: flex; align-items: center; }
@@ -108,7 +102,7 @@
   .card-name { font-family: var(--font-ui); font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card-pos { font-size: 11px; color: var(--muted); font-family: var(--font-ui); text-transform: uppercase; }
   .card-ovr { font-family: var(--font-display); font-size: 26px; color: var(--gold); line-height: 1; margin-left: 8px; }
-  .card-stats-mini { display: flex; flex-wrap: wrap; gap: 3px; position: relative; z-index: 5; transition: opacity .2s; }
+  .card-stats-mini { display: flex; flex-wrap: wrap; gap: 3px; position: relative; z-index: 5;}
   .stat-chip { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.04); border-radius: 4px; padding: 2px 5px; flex: 1 1 28%; }
   .stat-chip-label { font-size: 9px; color: var(--muted); font-family: var(--font-ui); text-transform: uppercase; }
   .stat-chip-val { font-size: 11px; font-weight: 700; font-family: var(--font-ui); }
@@ -119,9 +113,8 @@
   .pitch-controls { display: flex; gap: 8px; align-items: center; width: 100%; max-width: 520px; justify-content: space-between; }
   .pitch-controls-left, .pitch-controls-right { display: flex; gap: 8px; align-items: center; }
   .formation-label { font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; color: var(--teal); }
-  .formation-select { font-family: var(--font-ui); font-size: 13px; font-weight: 700; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 6px; cursor: pointer; letter-spacing: 1px; transition: border-color .2s; }
-  .formation-select:hover { border-color: var(--teal); }
-
+  .formation-select { font-family: var(--font-ui); font-size: 13px; font-weight: 700; background: var(--panel2); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: border-color .2s; }
+  
   .team-rating-badge { display: flex; align-items: center; gap: 6px; background: rgba(240,192,64,0.1); border: 1px solid var(--gold); border-radius: 20px; padding: 4px 14px; box-shadow: 0 0 10px rgba(240,192,64,0.15); }
   .team-rating-label { font-family: var(--font-ui); font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
   .team-rating-val { font-family: var(--font-display); font-size: 18px; color: var(--gold); letter-spacing: 1px; text-shadow: 0 0 10px rgba(240,192,64,0.5); }
@@ -132,25 +125,23 @@
   .pitch::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0px, transparent 7.5%, rgba(0,0,0,0.07) 7.5%, rgba(0,0,0,0.07) 15%); }
   .pitch-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  .slot { position: absolute; width: 68px; height: 68px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 5; user-select: none; }
-  .slot-inner { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.35); background-color: var(--slot-empty); background-size: cover; background-position: center top; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1); position: relative; backdrop-filter: blur(2px); overflow: hidden; touch-action: pan-y; will-change: transform, box-shadow; }
+  .slot { position: absolute; width: 68px; height: 68px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 5; user-select: none; touch-action: none; }
+  .slot-inner { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.35); background-color: var(--slot-empty); background-size: cover; background-position: center top; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1); position: relative; backdrop-filter: blur(2px); overflow: hidden; touch-action: none; will-change: transform, box-shadow; }
   .slot-label { font-family: var(--font-ui); font-size: 10px; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 
   .slot.drag-over .slot-inner { border-color: var(--teal); background-color: var(--slot-over); transform: scale(1.15); box-shadow: 0 0 25px var(--teal-glow); }
   .slot.occupied .slot-inner { border: 2px solid rgba(255,255,255,0.4); background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
   .slot.occupied:hover .slot-inner { border-color: var(--gold); transform: scale(1.08) translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 10px var(--gold-glow); }
 
-  /* สไตล์พิเศษสำหรับ OVR สูงๆ บนสนาม */
   .slot .slot-inner.ovr-legendary { border-color: var(--gold); box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 10px var(--gold-glow); animation: slotLegendaryGlow 2s infinite;}
   .slot .slot-inner.ovr-gold { border-color: var(--text); }
   @keyframes slotLegendaryGlow { 0%, 100% { box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 8px var(--gold-glow); } 50% { box-shadow: 0 5px 15px rgba(0,0,0,0.3), 0 0 15px var(--gold-glow); } }
 
-  .slot-player-name { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-align: center; color: #fff; margin-top: 1px; max-width: 68px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.9); transition: opacity .2s;}
+  .slot-player-name { font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-align: center; color: #fff; margin-top: 1px; max-width: 68px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
   .slot-player-ovr { font-family: var(--font-display); font-size: 20px; color: var(--gold); line-height: 1; text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.8); z-index: 2; }
   .slot-player-pos { font-family: var(--font-ui); font-size: 8px; color: #fff; text-transform: uppercase; background: rgba(0,212,170,0.8); padding: 1px 4px; border-radius: 4px; margin-top: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.8); z-index: 2; }
   .slot.occupied .slot-inner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); z-index: 1; }
 
-  /* แอนิเมชันตอนแก้ตำแหน่ง */
   .pitch-area.is-editing .slot { cursor: grab !important; z-index: 10; }
   .pitch-area.is-editing .slot-inner { border: 2px dashed var(--gold) !important; background-color: rgba(240,192,64,0.1) !important; animation: pulseEdit 2s infinite; }
   .pitch-area.is-editing .slot.occupied:hover .slot-inner { border-color: var(--gold) !important; transform: scale(1.05) !important; }
@@ -178,41 +169,30 @@
   /* ─── MODAL, TOAST, & ANIMATIONS ────────────────────────────── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .3s; }
   .modal-overlay.active { opacity: 1; pointer-events: all; }
-
   .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 340px; max-width: 90vw; transform: scale(0.9) translateY(30px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 24px 60px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;}
   .modal-overlay.active .modal { transform: scale(1) translateY(0); }
   .modal-overlay.modal-exit .modal { transform: scale(0.9) translateY(20px); transition: transform .25s ease-in; }
-
   .modal h2 { font-family: var(--font-display); font-size: 22px; color: var(--gold); margin-bottom: 6px; }
   .modal-actions { display: flex; gap: 10px; margin-top: 15px;}
 
-  /* ─── ปรับปรุงกรอบกราฟสถิติใหม่ (Beautiful Rectangular Frame) ─── */
+  /* Radar Chart Frame */
   .modal-detail .radar-chart-frame {
     margin: 0 auto 18px; padding: 12px; max-width: 280px;
-    background: var(--panel2); border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    background: var(--panel2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
     position: relative; overflow: hidden;
   }
-
   .modal-detail .radar-chart-frame::after {
     content: ''; position: absolute; top: 0; right: 0; width: 40px; height: 40px;
-    border-top: 2px solid var(--teal); border-right: 2px solid var(--teal); border-radius: 0 8px 0 0;
-    opacity: 0.8; box-shadow: 1px -1px 4px var(--teal-glow);
+    border-top: 2px solid var(--teal); border-right: 2px solid var(--teal); border-radius: 0 8px 0 0; opacity: 0.8; box-shadow: 1px -1px 4px var(--teal-glow);
   }
   .modal-detail .radar-chart-frame::before {
     content: ''; position: absolute; bottom: 0; left: 0; width: 40px; height: 40px;
-    border-bottom: 2px solid var(--teal); border-left: 2px solid var(--teal); border-radius: 0 0 0 8px;
-    opacity: 0.8; box-shadow: -1px 1px 4px var(--teal-glow);
+    border-bottom: 2px solid var(--teal); border-left: 2px solid var(--teal); border-radius: 0 0 0 8px; opacity: 0.8; box-shadow: -1px 1px 4px var(--teal-glow);
   }
-
-  /* สไตล์พิเศษสำหรับ Modal ตำนาน */
   .modal-legendary .radar-chart-frame { border-color: rgba(240,192,64,0.15); box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 0 10px rgba(240,192,64,0.05); }
   .modal-legendary .radar-chart-frame::after, .modal-legendary .radar-chart-frame::before { border-color: var(--gold); box-shadow: 0 0 5px var(--gold-glow); }
-
   .radar-chart-container { width: 100%; height: 100%; position: relative; z-index: 2; }
 
-  /* ─── TOAST & OTHER ANIMATIONS ─── */
   #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--teal); color: #0b0e13; font-family: var(--font-ui); font-size: 14px; font-weight: 700; padding: 10px 22px; border-radius: 30px; z-index: 200; transition: transform .3s; pointer-events: none; white-space: nowrap; box-shadow: 0 5px 20px rgba(0,0,0,0.5);}
   #toast.show { transform: translateX(-50%) translateY(0); } #toast.error { background: var(--red); color: #fff; }
 
@@ -224,30 +204,49 @@
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   .bench-dropzone { min-height: 48px; border: 2px dashed transparent; border-radius: 8px; margin: 4px; transition: all .2s; display: flex; align-items: center; justify-content: center; font-family: var(--font-ui); font-size: 11px; color: transparent; text-transform: uppercase; }
   .bench-dropzone.drag-over-bench { border-color: var(--teal); background: rgba(0,212,170,0.06); color: var(--teal); }
-  .section-divider { font-family: var(--font-ui); font-size: 10px; text-transform: uppercase; color: var(--muted); padding: 8px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 
-  /* 💥 แอนิเมชันตอนวางนักเตะลงสนาม (Bouncy Drop Effect) 💥 */
+  /* Bouncy Drop Effect */
   @keyframes slotDropBounce {
-    0% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
-    60% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
-    80% { transform: translate(-50%, -50%) scale(1.1); }
+    0% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    60% { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1.05); }
     100% { transform: translate(-50%, -50%) scale(1); }
   }
   .slot.just-dropped .slot-inner { animation: slotDropBounce 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-  .slot.just-dropped .slot-player-name { opacity: 0; animation: fadeIn .2s .4s forwards;} 
-  @keyframes fadeIn { to {opacity: 1;} }
 
-  /* ─── RESPONSIVE ───────────────────── */
-  @media (max-width: 1024px), (max-height: 600px) {
-    body { overflow-y: auto; overflow-x: hidden; }
+  /* ─── RESPONSIVE (MOBILE & LANDSCAPE) ───────────────────── */
+  /* มือถือแนวตั้งปกติ */
+  @media (max-width: 1024px) {
     header { padding: 0 16px; flex-wrap: wrap; height: auto; padding-top: 10px; padding-bottom: 10px; gap: 10px;}
     .header-actions { flex-wrap: wrap; justify-content: flex-start; width: 100%;}
-    .app { display: flex; flex-direction: column; overflow: visible; }
+    .app { display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
     .pitch-area { order: 1; padding: 24px 12px; }
     .bench { order: 2; border-right: none; border-bottom: 1px solid var(--border); border-top: 1px solid var(--border); height: 450px; flex-shrink: 0; }
     .creator-panel { order: 3; border-left: none; height: auto; overflow-y: visible; }
     .pitch-controls { flex-direction: column; gap: 12px; }
-    .slot { transform: translate(-50%, -50%) scale(0.9); }
+  }
+  /* มือถือแนวนอน (Landscape) - เรียง 3 คอลัมน์ซ้ายไปขวา ปัดเลื่อนเอา */
+  @media (max-width: 950px) and (orientation: landscape) {
+    body { overflow: hidden; }
+    .app {
+      display: flex;
+      flex-direction: row; /* กลับมาเรียงซ้ายไปขวา */
+      overflow-x: auto; /* เลื่อนซ้ายขวาได้ */
+      overflow-y: hidden;
+    }
+    .bench, .creator-panel {
+      width: 300px;
+      height: 100%;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+    .pitch-area {
+      flex: 1;
+      min-width: 450px;
+      height: 100%;
+      padding: 10px;
+      order: unset; /* รีเซ็ต order ให้เรียงตามปกติ */
+    }
   }
   @media (max-width: 400px) {
     .slot { transform: translate(-50%, -50%) scale(0.78); }
@@ -270,6 +269,7 @@
     <div class="panel-header">
       <div class="panel-title">SQUAD BENCH</div>
       <div class="panel-sub" id="bench-count">0 players available</div>
+      <div style="font-size: 10px; color: var(--teal); margin-top: 4px; font-family: var(--font-ui);">💡 แตะค้าง (Hold) เพื่อลากนักเตะลงสนาม</div>
     </div>
     
     <div class="bench-filters">
@@ -362,6 +362,7 @@
           <option value="LW">LW — Left Winger</option>
           <option value="RW">RW — Right Winger</option>
           <option value="ST">ST — Striker</option>
+          <option value="CF">CF — Centre Forward</option>
         </select>
       </div>
       <div class="section-divider">Attributes</div>
@@ -410,6 +411,7 @@
 <div id="toast"></div>
 
 <script>
+// ตั้งค่า Polyfill ให้ลากบนมือถือได้ (ต้องแตะค้าง 0.25 วิ)
 MobileDragDrop.polyfill({ holdToDrag: 250 });
 
 // ─── CONFIGURATION ──────────────────────────────────
