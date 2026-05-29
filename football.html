@@ -71,11 +71,11 @@
   .bench-list::-webkit-scrollbar { width: 4px; } .bench-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .bench-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 16px; font-family: var(--font-ui); line-height: 1.7; }
 
-  /* ─── PLAYER CARD (สำคัญ: touch-action none เพื่อให้ลากบนมือถือได้) ─── */
+  /* ─── PLAYER CARD ─── */
   .player-card { 
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; 
     cursor: grab; transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1); user-select: none; position: relative; overflow: hidden; 
-    touch-action: none; /* ล็อกการเลื่อนจอ ให้กลายเป็นการลาก */
+    touch-action: manipulation; /* อนุญาตให้เลื่อนหน้าจอได้ และใช้การแตะค้างเพื่อลากแทน */
   }
   .player-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); border-radius: 3px 0 0 3px; z-index: 2;}
 
@@ -125,8 +125,8 @@
   .pitch::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(180deg, transparent 0px, transparent 7.5%, rgba(0,0,0,0.07) 7.5%, rgba(0,0,0,0.07) 15%); }
   .pitch-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-  .slot { position: absolute; width: 68px; height: 68px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 5; user-select: none; touch-action: none; }
-  .slot-inner { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.35); background-color: var(--slot-empty); background-size: cover; background-position: center top; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1); position: relative; backdrop-filter: blur(2px); overflow: hidden; touch-action: none; will-change: transform, box-shadow; }
+  .slot { position: absolute; width: 68px; height: 68px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; z-index: 5; user-select: none; touch-action: manipulation; }
+  .slot-inner { width: 56px; height: 56px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.35); background-color: var(--slot-empty); background-size: cover; background-position: center top; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1); position: relative; backdrop-filter: blur(2px); overflow: hidden; touch-action: manipulation; will-change: transform, box-shadow; }
   .slot-label { font-family: var(--font-ui); font-size: 10px; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 
   .slot.drag-over .slot-inner { border-color: var(--teal); background-color: var(--slot-over); transform: scale(1.15); box-shadow: 0 0 25px var(--teal-glow); }
@@ -225,29 +225,39 @@
     .creator-panel { order: 3; border-left: none; height: auto; overflow-y: visible; }
     .pitch-controls { flex-direction: column; gap: 12px; }
   }
-  /* มือถือแนวนอน (Landscape) - เรียง 3 คอลัมน์ซ้ายไปขวา ปัดเลื่อนเอา */
+  
+  /* มือถือแนวนอน (Landscape) - เรียง 3 คอลัมน์ซ้ายไปขวา ปัดเลื่อนเอาแบบสมูท */
   @media (max-width: 950px) and (orientation: landscape) {
     body { overflow: hidden; }
     .app {
       display: flex;
-      flex-direction: row; /* กลับมาเรียงซ้ายไปขวา */
-      overflow-x: auto; /* เลื่อนซ้ายขวาได้ */
+      flex-direction: row; 
+      overflow-x: auto; 
       overflow-y: hidden;
+      -webkit-overflow-scrolling: touch; /* เลื่อนไหลลื่นขึ้นใน iOS */
+      scroll-behavior: smooth;
     }
-    .bench, .creator-panel {
-      width: 300px;
+    .bench {
+      width: 260px; /* ปรับขนาดให้พอดีจอมากขึ้น */
       height: 100%;
       flex-shrink: 0;
       border-right: 1px solid var(--border);
     }
     .pitch-area {
       flex: 1;
-      min-width: 450px;
+      min-width: 380px; 
       height: 100%;
       padding: 10px;
-      order: unset; /* รีเซ็ต order ให้เรียงตามปกติ */
+      order: unset; 
+    }
+    .creator-panel {
+      width: 280px; 
+      height: 100%;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
     }
   }
+  
   @media (max-width: 400px) {
     .slot { transform: translate(-50%, -50%) scale(0.78); }
     .pitch-controls-left, .pitch-controls-right { width: 100%; justify-content: center; }
@@ -269,7 +279,7 @@
     <div class="panel-header">
       <div class="panel-title">SQUAD BENCH</div>
       <div class="panel-sub" id="bench-count">0 players available</div>
-      <div style="font-size: 10px; color: var(--teal); margin-top: 4px; font-family: var(--font-ui);">💡 แตะค้าง (Hold) เพื่อลากนักเตะลงสนาม</div>
+      <div style="font-size: 10px; color: var(--teal); margin-top: 4px; font-family: var(--font-ui);">💡 แตะค้าง (Hold) 0.25 วิ เพื่อลากนักเตะลงสนาม</div>
     </div>
     
     <div class="bench-filters">
@@ -411,7 +421,7 @@
 <div id="toast"></div>
 
 <script>
-// ตั้งค่า Polyfill ให้ลากบนมือถือได้ (ต้องแตะค้าง 0.25 วิ)
+// ตั้งค่า Polyfill ให้แตะค้าง 0.25 วิเพื่อลาก (ลดปัญหาเผลอลากตอนเลื่อนจอ)
 MobileDragDrop.polyfill({ holdToDrag: 250 });
 
 // ─── CONFIGURATION ──────────────────────────────────
@@ -461,7 +471,7 @@ document.getElementById('inp-img').addEventListener('change', function(e) {
   reader.readAsDataURL(file);
 });
 
-// ─── RADAR CHART (กราฟใยแมงมุม) ──────────────────────────────
+// ─── RADAR CHART ──────────────────────────────
 function renderRadarChart(player) {
   const ctx = document.getElementById('radarChart').getContext('2d');
   if(radarChartInstance) radarChartInstance.destroy(); 
@@ -562,7 +572,11 @@ function createPlayer() {
   document.getElementById('img-preview').style.display = 'none'; 
   currentImageBase64 = null;
   config.keys.forEach(s => { const sl = document.getElementById('sl-' + s); if(sl) { sl.value = 75; updateStatDisplay(s, 75); } });
-  if(window.innerWidth <= 1024) document.querySelector('.bench').scrollIntoView({behavior: 'smooth'});
+  
+  // ให้หน้าจอเลื่อนกลับไปหาม้านั่งสำรองอัตโนมัติเมื่อกดสร้างเสร็จ (รองรับทั้งแนวตั้งและแนวนอน)
+  if(window.innerWidth <= 1024) {
+      document.querySelector('.bench').scrollIntoView({behavior: 'smooth', block: 'start', inline: 'start'});
+  }
 }
 
 function deletePlayer(playerId) {
